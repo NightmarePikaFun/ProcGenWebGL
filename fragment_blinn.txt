@@ -1,0 +1,147 @@
+uniform struct PointLight{
+	vec4 position;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
+	vec3 attenuation;
+} light;
+
+uniform struct PointLight1{
+	vec4 position;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
+	vec3 attenuation;
+} light1;
+
+uniform struct SpotLight{
+	vec4 position;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
+	vec3 attenuation;
+	vec3 spotdirection;
+	float spotcutoff;
+	float spotexp;
+} spot;
+
+uniform struct SpotLight1{
+	vec4 position;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
+	vec3 attenuation;
+	vec3 spotdirection;
+	float spotcutoff;
+	float spotexp;
+} spot1;
+
+
+uniform struct Material{
+	int count_tex;
+	sampler2D texture1;
+	sampler2D texture2;
+	vec4 ambient;
+	vec4 diffuse;
+	vec4 specular;
+	vec4 emission;
+	float shininess;
+	vec4 color_obj;
+} material;
+
+uniform bool spot_on;
+uniform bool light_on;
+
+in struct Vertex {
+	vec2 texcoord;
+	vec3 normal;
+	vec3 lightDir;
+	vec3 lightDir1;
+	vec3 lightDir2;
+	vec3 lightDir3;
+	vec3 viewDir;
+	float distance;
+	float distance1;
+	float distance2;
+	float distance3;
+} Vert;
+
+void main() {
+	vec3 normal = normalize(Vert.normal);
+	vec3 lightDir = normalize(Vert.lightDir);
+	vec3 lightDir1 = normalize(Vert.lightDir1);
+	vec3 lightDir2 = normalize(Vert.lightDir2);
+	vec3 lightDir3 = normalize(Vert.lightDir3);
+	vec3 viewDir = normalize(Vert.viewDir);
+
+	float attenuation = 1.0/(light.attenuation[0] +
+	light.attenuation[1] * Vert.distance +
+	light.attenuation[2] * Vert.distance * Vert.distance); 	
+	vec4 color = material.emission;
+	color += material.ambient * light.ambient * attenuation;
+	float Ndot = max(dot(normal,lightDir),0.0);
+	color +=material.diffuse * light.diffuse * Ndot* attenuation;
+	vec3 h = normalize(lightDir + viewDir);
+	float n = 16;
+	float RdotVpow = max(pow(dot(normal, h), n),0.0);
+	color += material.specular * light.specular * RdotVpow * attenuation;
+
+
+	if (light_on)
+	{
+		float attenuation1 = 1.0/(light1.attenuation[0] +
+		light1.attenuation[1] * Vert.distance1 +
+		light1.attenuation[2] * Vert.distance1 * Vert.distance1); 
+		color += material.ambient * light1.ambient * attenuation1;
+		Ndot = max(dot(normal,lightDir1),0.0);
+		color +=material.diffuse * light1.diffuse * Ndot* attenuation1;
+		h = normalize(lightDir1 + viewDir);
+		RdotVpow = max(pow(dot(normal, h), n),0.0);
+		color += material.specular * light1.specular * RdotVpow * attenuation1;
+	}
+	float spotEffect;
+	if (spot_on)
+	{
+		float spotEffect = dot(normalize(spot.spotdirection), -lightDir2);
+		if (spotEffect < spot.spotcutoff)
+		{
+			spotEffect = max( pow(spotEffect, spot.spotexp), 0.0);
+			float attenuation2 = spotEffect/(spot.attenuation[0] +
+			spot.attenuation[1] * Vert.distance2 +
+			spot.attenuation[2] * Vert.distance2 * Vert.distance2);
+			color += material.ambient * spot.ambient * attenuation2;
+			Ndot = max(dot(normal,lightDir2),0.0);
+			color +=material.diffuse * spot.diffuse * Ndot* attenuation2;
+			h = normalize(lightDir2 + viewDir);
+			RdotVpow = max(pow(dot(normal, h), n),0.0);
+			color += material.specular * spot.specular * RdotVpow * attenuation2;
+		}
+		
+	}
+	
+	spotEffect = dot(normalize(spot1.spotdirection), -lightDir3);
+	if (spotEffect < spot1.spotcutoff)
+	{
+		spotEffect = max( pow(spotEffect, spot1.spotexp), 0.0);
+		float attenuation3 = spotEffect/(spot1.attenuation[0] +
+		spot1.attenuation[1] * Vert.distance3 +
+		spot1.attenuation[2] * Vert.distance3 * Vert.distance3);
+		color += material.ambient * spot1.ambient * attenuation3;
+		Ndot = max(dot(normal,lightDir3),0.0);
+		color +=material.diffuse * spot1.diffuse * Ndot* attenuation3;
+		h = normalize(lightDir3 + viewDir);
+		RdotVpow = max(pow(dot(normal, h), n),0.0);
+		color += material.specular * spot1.specular * RdotVpow * attenuation3;
+	}
+	
+
+	if (material.count_tex == 2)
+	{
+		color *= mix(texture(material.texture1, Vert.texcoord), texture(material.texture2, Vert.texcoord), 0.5);
+	}
+	if (material.count_tex == 1)
+	{
+		color *= texture(material.texture1, vec2(Vert.texcoord.x,1-Vert.texcoord.y));
+	}
+	gl_FragColor = color  * material.color_obj;
+}
