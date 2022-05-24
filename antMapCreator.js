@@ -20,10 +20,15 @@ export default class Ant{
                 this.pathMap[i][j]=0;
             }
         }
-        console.log(this.map);
-
+        this.antCounter = 0;
+        this.antStartPosition = {x:0,y:0};
         this.moveStep = [{x:-1,y:0},{x:0,y:-1},{x:1,y:0},{x:0,y:1}]
     }
+}
+
+Ant.prototype.getStartPosition = function ()
+{
+    return this.antStartPosition;
 }
 
 Ant.prototype.setLandSize = function (size)
@@ -41,9 +46,12 @@ Ant.prototype.move = function (){
     {
         position.y = position.y-1;
     }
+    if(this.antCounter == 0)
+    {
+        this.antStartPosition = {x:position.x,y:position.y};
+    }
+    this.antCounter++;
     let dir = 2;
-    console.log([position.x,position.y]);
-    console.log(this.pathMap);
     for(let i = 0; i<this.iteration;i++)
     {
         if(this.pathMap[position.x][position.y]==1)
@@ -131,8 +139,8 @@ Ant.prototype.move = function (){
             }
         }
     }
-    console.log("After ant move");
-    console.log(this.mapWall);
-    console.log(this.map);
+    //console.log("After ant move");
+    //console.log(this.mapWall);
+    //console.log(this.map);
     return this.mapWall;
 }

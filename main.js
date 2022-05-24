@@ -26,7 +26,7 @@ let CarGameObject;
 let playerPos = {x:0.0, y:0.0, z:0.0};
 
 const OBJ = require('webgl-obj-loader');
-
+let wallMapa = [];
 window.onload = function main() {
     const canvas = document.querySelector("#gl_canvas");
     const gl = canvas.getContext("webgl2");// Получаем контекст webgl2
@@ -70,6 +70,11 @@ window.onload = function main() {
     //Ant
     let map = new Ant(10,100,100,Math.random()*300);
     let mapa = map.move();
+    let startPos = map.getStartPosition();
+    console.log(startPos);
+    playerPos.x = 100+10-startPos.x;
+    playerPos.z =  startPos.y;
+    console.log(playerPos);
     map.setLandSize(Math.random()*400);
     mapa = map.move();
     map.setLandSize(Math.random()*500);
@@ -86,11 +91,11 @@ window.onload = function main() {
             else{
                 drawMapContext.strokeStyle = "rgb(25,255,0)";
                 buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]));
-                buffers[buffers.length-1].setTranslateScale([i,0,j],[0.5,0.5,0.5],0);
+                buffers[buffers.length-1].setTranslateScale([-mapa.length+i+1,0.5,-j],[0.5,0.5,0.5],0);
             }
             drawMapContext.beginPath();
-            drawMapContext.moveTo(i,j);
-            drawMapContext.lineTo(i+1,j+1);
+            drawMapContext.moveTo(j,i);
+            drawMapContext.lineTo(j+1,i+1);
             drawMapContext.stroke();
         }
     }
@@ -98,6 +103,8 @@ window.onload = function main() {
     window.onkeydown = (e) => {
         drawScene(gl, programInfo, buffers);
     }
+    wallMapa = mapa;
+    console.log(mapa);
     drawScene(gl, programInfo, buffers);
 }
 
@@ -214,7 +221,7 @@ function drawScene(gl, programInfo, buffers) {
 
     //Camera
     gl.uniform4fv(programInfo.uniformLocations.cameraPos, [playerPos.x,0.0,playerPos.z,1.0,])
-    console.log("cam");
+    //console.log("cam");
     //
 
     gl.useProgram(programInfo.program);// Устанавливаем используемую программу
@@ -234,7 +241,7 @@ function drawScene(gl, programInfo, buffers) {
     let carXY = CarGameObject.getLightXY();
     gl.uniform3fv(programInfo.uniformLocations.carPosition,[carXY[1],0.0,carXY[0]]);
     //console.log(carXY);
-    console.log([xCarPos,zCarPos]);
+    //console.log([xCarPos,zCarPos]);
     gl.uniform1f(programInfo.uniformLocations.carLight,carLight);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial);
@@ -264,7 +271,6 @@ function drawScene(gl, programInfo, buffers) {
         gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
         //buffers[i].setTranslateScale([i-3,0.0,0.0],[0.5,0.5,0.5],0.0);
         buffers[i].draw(gl, programInfo);
-        console.log("+");
     }
 }
 
@@ -348,19 +354,49 @@ function alertKey(e) {
     }
     if(e.key =="w")
     {
-        playerPos.x+=1;
+        console.log(playerPos);
+        console.log(wallMapa.length+9-playerPos.x)
+        if(wallMapa.length + 9 - playerPos.x <0 || wallMapa.length+9-playerPos.x>wallMapa.length-1)
+        {
+            playerPos.x += 1;
+        }
+        else if(wallMapa[wallMapa.length + 9 - playerPos.x][playerPos.z]==0)
+        {
+             playerPos.x += 1;
+        }
     }
     if(e.key =="s")
     {
-        playerPos.x-=1;
+        if(wallMapa.length + 11 - playerPos.x <0 || wallMapa.length+11-playerPos.x>wallMapa.length-1)
+        {
+            playerPos.x -= 1;
+        }
+        else if(wallMapa[wallMapa.length + 11 - playerPos.x][playerPos.z]==0)
+        {
+            playerPos.x -= 1;
+        }
     }
     if(e.key =="a")
     {
-        playerPos.z-=0.1;
+        if(playerPos.z <0 || playerPos.z>wallMapa.length-1 || wallMapa.length + 10 - playerPos.x <0 || wallMapa.length+10-playerPos.x>wallMapa.length-1)
+        {
+            playerPos.z-=1;
+        }
+        else if(wallMapa[wallMapa.length + 10 - playerPos.x][playerPos.z-1]==0)
+        {
+            playerPos.z-=1;
+        }
     }
     if(e.key =="d")
     {
-        playerPos.z+=0.1;
+        if(playerPos.z <0 || playerPos.z>wallMapa.length-1 || wallMapa.length + 10 - playerPos.x <0 || wallMapa.length+10-playerPos.x>wallMapa.length-1)
+        {
+            playerPos.z+=1;
+        }
+        else if(wallMapa[wallMapa.length + 10 - playerPos.x][playerPos.z+1]==0)
+        {
+            playerPos.z+=1;
+        }
     }
     xLightPos = futureCar.y;
     zLightPos = futureCar.x;
