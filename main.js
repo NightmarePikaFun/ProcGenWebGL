@@ -9,6 +9,7 @@ import {platform} from "./platform";
 import {mushrooms} from "./mushrooms";
 
 import Ant from "./antMapCreator";
+import {cubeDefualt} from "./cube";
 
 let buffers;
 let angleRotateCar = 0.0;
@@ -22,6 +23,7 @@ let aX =0.0;
 let aY=3.1;
 let GameObject = [];
 let CarGameObject;
+let playerPos = {x:0.0, y:0.0, z:0.0};
 
 const OBJ = require('webgl-obj-loader');
 
@@ -36,7 +38,7 @@ window.onload = function main() {
         return;
     }
     
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);// Устанавливаем размер вьюпорта  
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);// Устанавливаем размер вьюпорта
     gl.enable(gl.DEPTH_TEST);// Включаем z-buffer
     
     const programInfo = initProgramInfo(gl);
@@ -45,15 +47,25 @@ window.onload = function main() {
     CarGameObject = new Collision2D(0.0,0.0,0.11);
     GameObject[0] = new Collision2D(currentPose[1][0],currentPose[1][2],0.05);
     GameObject[1] = new Collision2D(currentPose[2][0],currentPose[2][2],0.05);
-    buffers = [initMesh(gl,new OBJ.Mesh(sphere),[0.7,0.1,0.6,1.0],"texture.png"),
-        initMesh(gl, new OBJ.Mesh(model),[0.2,0.3,0.7,1.0]),
-        initMesh(gl, new OBJ.Mesh(platform),[1.0,1.0,1.0,1.0]),
-        initMesh(gl, new OBJ.Mesh(mushrooms),[0.2,0.0,0.7,1.0])];// Инициализируем буфер
+    buffers = [initMesh(gl,new OBJ.Mesh(sphere),[0.7,0.1,0.6,1.0],"texture.png"),//0
+        initMesh(gl, new OBJ.Mesh(model),[0.2,0.3,0.7,1.0]),//1
+        initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//2
+        initMesh(gl, new OBJ.Mesh(mushrooms),[0.2,0.0,0.7,1.0]),//3
+        // initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//4
+        // initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//5
+        // initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//6
+        // initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//7
+    ];// Инициализируем буфер
    //SetStartPosition
+
     buffers[0].setTranslateScale([0.0,0.0,0],[0.1,0.1,0.1],angleRotateCar);
     buffers[1].setTranslateScale(currentPose[1],[0.1,0.1,0.1],0);
-    buffers[2].setTranslateScale([0.0,0.0,0.0],[0.1,1.0,0.1],0);
+    buffers[2].setTranslateScale([0.0,0.0,0.0],[1.0,1.0,1.0],0);
     buffers[3].setTranslateScale(currentPose[2],[0.01,0.01,0.01],0);
+    // buffers[4].setTranslateScale([1.0,0.0,0.0],[1.0,1.0,1.0],0);
+    // buffers[5].setTranslateScale([2.0,0.0,0.0],[1.0,1.0,1.0],0);
+    // buffers[6].setTranslateScale([3.0,0.0,0.0],[1.0,1.0,1.0],0);
+    // buffers[7].setTranslateScale([4.0,0.0,0.0],[1.0,1.0,1.0],0);
 
     //Ant
     let map = new Ant(10,100,100,Math.random()*300);
@@ -73,6 +85,7 @@ window.onload = function main() {
             }
             else{
                 drawMapContext.strokeStyle = "rgb(25,255,0)";
+                //buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]))
             }
             drawMapContext.beginPath();
             drawMapContext.moveTo(i,j);
@@ -142,6 +155,8 @@ function initProgramInfo(gl) {
             //tmpLightRotate
             tLX: gl.getUniformLocation(shaderProgram,'tmpX'),
             tLY: gl.getUniformLocation(shaderProgram,'tmpY'),
+            //camPos
+            cameraPos: gl.getUniformLocation(shaderProgram,'camPos'),
         },
         textures: {
             textureMaterial: loadTexture(gl, document.getElementById("orange").src),
@@ -196,10 +211,16 @@ function drawScene(gl, programInfo, buffers) {
     gl.depthFunc(gl.LEQUAL);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    //Camera
+    gl.uniform4fv(programInfo.uniformLocations.cameraPos, [playerPos.x,0.0,playerPos.z,1.0,])
+    console.log("cam");
+    //
+
     gl.useProgram(programInfo.program);// Устанавливаем используемую программу
     setupLights(gl,programInfo);
-    const fieldOfView = 45 * Math.PI / 180;   // in radians
-    const projectionMatrix = mat4.create();
+    const fieldOfView = 1.0;   // in radians
+    let projectionMatrix = mat4.create();
+    let pMj;
     mat4.perspective(projectionMatrix, fieldOfView,  gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 100.0);
     gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
 
@@ -225,11 +246,11 @@ function drawScene(gl, programInfo, buffers) {
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial3);
 
-    //TMP
+    //TMP platform
     gl.uniform3fv(programInfo.uniformLocations.tLY, [-angleRotateCar+3.1,aX,0.0]);
 
     gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
-    buffers[2].setTranslateScale([0.0,0.0,0.0],[0.1,0.1,0.1],0.0);
+    buffers[2].setTranslateScale([0.0,-1.0,0.0],[0.5,0.5,0.5],0.0);
     buffers[2].draw(gl, programInfo);
 
     gl.activeTexture(gl.TEXTURE3);
@@ -237,8 +258,12 @@ function drawScene(gl, programInfo, buffers) {
     gl.uniform1i(programInfo.uniformLocations.uSampler, 3);
     buffers[3].setTranslateScale(currentPose[2],[0.1,0.1,0.1],0.0);
     buffers[3].draw(gl, programInfo);
-
-
+    for(let i = 4; i <buffers.length;i++)
+    {
+        gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
+        buffers[i].setTranslateScale([i-3,0.0,0.0],[0.5,0.5,0.5],0.0);
+        buffers[i].draw(gl, programInfo);
+    }
 }
 
 addEventListener("keydown", alertKey);
@@ -318,6 +343,22 @@ function alertKey(e) {
         } else {
             carLight = 1.0;
         }
+    }
+    if(e.key =="w")
+    {
+        playerPos.x+=0.1;
+    }
+    if(e.key =="s")
+    {
+        playerPos.x-=0.1;
+    }
+    if(e.key =="a")
+    {
+        playerPos.z-=0.1;
+    }
+    if(e.key =="d")
+    {
+        playerPos.z+=0.1;
     }
     xLightPos = futureCar.y;
     zLightPos = futureCar.x;

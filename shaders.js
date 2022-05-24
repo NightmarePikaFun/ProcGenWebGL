@@ -104,20 +104,29 @@ const Funcs =`
 `;
 
 const transformFunc =`
-    mat3 transformMatrix(float x_angle, float y_angle){
+    mat3 transformMatrix(float x_angle, float y_angle, float ang){
         return mat3(
         1, 0, 0,
-        0, cos(x_angle),  sin(x_angle),
-        0, -sin(x_angle), cos(x_angle)
+        0, cos(ang),  sin(ang),
+        0, -sin(ang), cos(ang)
     ) * mat3(
-        cos(y_angle), -sin(y_angle), 0,
-        sin(y_angle), cos(y_angle), 0,
+        cos(x_angle), -sin(x_angle), 0,
+        sin(x_angle), cos(x_angle), 0,
         0, 0, 1
-    );/*mat3(
+    ) *
+        mat3(
         cos(y_angle), 0, sin(y_angle),
         0, 1, 0,
         -sin(y_angle), 0, cos(y_angle)
-    );*/
+    );
+    }
+    
+    mat3 transformMatrixY(float ang){
+        return mat3(
+        cos(ang), -sin(ang), 0,
+        sin(ang), cos(ang), 0,
+        0, 1, 0
+    );
     }
 `;
 
@@ -147,6 +156,7 @@ uniform mat4 uViewMatrix;
 uniform mat4 uProjectionMatrix;
 uniform mat3 uNormalMatrix;
 uniform vec3 tmpY;
+uniform vec4 camPos;
 
 out vec3 vnormal;
 out vec2 texCoord;
@@ -161,9 +171,10 @@ out vec3 tmpPos;
 out vec3 toLight;
 
 void main() {
-    vec4 vertexPositionEye4 = /*uViewMatrix * */uModelViewMatrix * vec4(avertexPosition, 1.0);
-    vec3 vertexPositionEye3 = vertexPositionEye4.xyz / vertexPositionEye4.w;
-   
+    vec4 vertexPositionEye4 = /*uViewMatrix */uModelViewMatrix * vec4(avertexPosition, 1.0);
+    vertexPositionEye4 = vec4(vertexPositionEye4.xyz * transformMatrix(0.5,-0.653,0.0),1.0);//
+    vertexPositionEye4+=vec4(camPos.xyz* transformMatrix(0.5,-0.653,0.),1.0);//
+    vec3 vertexPositionEye3 = (vertexPositionEye4.xyz)/vertexPositionEye4.w ;
 
    
     // получаем вектор направления света
@@ -173,10 +184,10 @@ void main() {
     // получаем нормаль
     vec3 normal = normalize(uNormalMatrix * anormalPosition);
 
-    gl_Position = uProjectionMatrix *  uViewMatrix *vertexPositionEye4;
+    gl_Position = (uProjectionMatrix *  uViewMatrix *vertexPositionEye4);
 
     //TestCode
-    tmpPos =vec3(vertexPositionEye3.z-carLight.carPosition.z,vertexPositionEye3.y,vertexPositionEye3.x-carLight.carPosition.x)*transformMatrix(2.5,tmpY.x);
+    tmpPos =vec3(vertexPositionEye3.z-carLight.carPosition.z,vertexPositionEye3.y,vertexPositionEye3.x-carLight.carPosition.x)*transformMatrix(4.5,tmpY.x,0.);
     toLight = -tmpPos*4.0+light2.position;
    //
 

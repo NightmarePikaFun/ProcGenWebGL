@@ -50,6 +50,10 @@ Ant.prototype.move = function (){
             {
                 dir = 0;
             }
+
+            this.pathMap[position.x][position.y]=0;
+            position.x += this.moveStep[dir].x;
+            position.y += this.moveStep[dir].y;
             if(position.x<0)
             {
                 position.x = this.width-1;
@@ -66,9 +70,6 @@ Ant.prototype.move = function (){
             {
                 position.y = 0;
             }
-            this.pathMap[position.x][position.y]=0;
-            position.x += this.moveStep[dir].x;
-            position.y += this.moveStep[dir].y;
         }
         else{
             dir=dir-1;
@@ -76,6 +77,11 @@ Ant.prototype.move = function (){
             {
                 dir = 3;
             }
+
+            this.pathMap[position.x][position.y]=1;
+            this.map[position.x][position.y]=1;
+            position.x += this.moveStep[dir].x;
+            position.y += this.moveStep[dir].y;
             if(position.x<0)
             {
                 position.x = this.width-1;
@@ -92,10 +98,6 @@ Ant.prototype.move = function (){
             {
                 position.y = 0;
             }
-            this.pathMap[position.x][position.y]=1;
-            this.map[position.x][position.y]=1;
-            position.x += this.moveStep[dir].x;
-            position.y += this.moveStep[dir].y;
         }
     }
     console.log("After ant move");
