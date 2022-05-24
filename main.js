@@ -24,8 +24,10 @@ let aY=3.1;
 let GameObject = [];
 let CarGameObject;
 let playerPos = {x:0.0, y:0.0, z:0.0};
-let rotateCamMatrix = [0.0,0.0,0.0];
-let bufferMatrix;
+let rotateCamMatrix = [0.0,-7.0,0.0];
+let wallMAtrix;
+let loadPos = {x:0,y:0};
+let firsStart = true;
 
 const OBJ = require('webgl-obj-loader');
 let wallMapa = [];
@@ -73,15 +75,17 @@ window.onload = function main() {
     let map = new Ant(10,100,100,Math.random()*300);
     let mapa = map.move();
     let startPos = map.getStartPosition();
-    console.log(startPos);
+    loadPos.x = startPos.x;
+    loadPos.x = startPos.y;
     playerPos.x = 100+10-startPos.x;
     xCarPos = -playerPos.x+10;
     playerPos.z =  startPos.y;
     zCarPos = -playerPos.z;
-    console.log(playerPos);
-    console.log("car");
-    console.log([xCarPos,zCarPos]);
     map.setLandSize(Math.random()*400);
+    mapa = map.move();
+    map.setLandSize(Math.random()*500);
+    mapa = map.move();
+    map.setLandSize(Math.random()*500);
     mapa = map.move();
     map.setLandSize(Math.random()*500);
     mapa = map.move();
@@ -89,8 +93,24 @@ window.onload = function main() {
     map.createWall();
     mapa = map.getMapWall();
     drawMapContext.lineWidth = 1;
-    bufferMatrix = Array(100).fill(Array(100).fill(0));
-    console.log(bufferMatrix);
+    let number = 4;
+    wallMAtrix=[];
+    for(let i = 0 ; i<mapa.length;i++)
+    {
+        wallMAtrix[i] = []
+        for(let j=0;j<mapa[i].length;j++)
+        {
+            if(mapa[i][j]>0)
+            {
+                wallMAtrix[i][j]=number;
+                number++;
+            }
+            else{
+                wallMAtrix[i][j]=0;
+            }
+        }
+    }
+
     for(let i = 0; i<mapa.length;i++)
     {
         for(let j = 0; j<mapa[i].length;j++)
@@ -101,7 +121,7 @@ window.onload = function main() {
             }
             else{
                 drawMapContext.strokeStyle = "rgb(25,255,0)";
-                bufferMatrix[i][j]=buffers.length-1;
+                //number++;
                 buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]));
                 buffers[buffers.length-1].setTranslateScale([-mapa.length+i+1,0.5,-j],[0.5,0.5,0.5],0);
             }
@@ -250,13 +270,10 @@ function drawScene(gl, programInfo, buffers) {
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial2);
     gl.uniform1i(programInfo.uniformLocations.uSampler, 1);
 
-    console.log([xCarPos,zCarPos]);
     buffers[0].setTranslateScale([xCarPos,0.0,zCarPos],[0.1,0.1,0.1],angleRotateCar, "texture.png");
     buffers[0].draw(gl, programInfo,rotateCamMatrix);
     let carXY = CarGameObject.getLightXY();
     gl.uniform3fv(programInfo.uniformLocations.carPosition,[carXY[1],0.0,carXY[0]]);
-    //console.log(carXY);
-    //console.log([xCarPos,zCarPos]);
     gl.uniform1f(programInfo.uniformLocations.carLight,carLight);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial);
@@ -282,16 +299,49 @@ function drawScene(gl, programInfo, buffers) {
     buffers[3].setTranslateScale(currentPose[2],[0.1,0.1,0.1],0.0);
     buffers[3].draw(gl, programInfo,rotateCamMatrix);
 
+    console.log([playerPos.x,playerPos.z]);
+    console.log([Math.floor(-xCarPos+8),Math.floor(zCarPos+0.5)]);
     //tmpCode
+    if(firsStart)
+    {
+        for(let i = 4; i <buffers.length;i++)
+        {
+            gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
+            buffers[i].draw(gl, programInfo, rotateCamMatrix);
+        }
+        firsStart= false;
+    }
+    else {
 
+        for (let i = 100 - playerPos.x-10; i < 100 - playerPos.x + 10; i++) {
+            if (i < 0) {
+                continue;
+            }
+            if (i > 99) {
+                continue;
+            }
+            for (let j = playerPos.z - 10; j < playerPos.z + 10; j++) {
+                if (j < 0) {
+                    continue;
+                }
+                if (j > 99) {
+                    continue;
+                }
+                if (wallMAtrix[i][j] > 0) {
+                    gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
+                    buffers[wallMAtrix[i][j]].draw(gl, programInfo, rotateCamMatrix);
+                }
+            }
+        }
+    }
     //
 
-    for(let i = 4; i <buffers.length;i++)
+    /*for(let i = 4; i <buffers.length;i++)
     {
         gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
         //buffers[i].setTranslateScale([i-3,0.0,0.0],[0.5,0.5,0.5],0.0);
         buffers[i].draw(gl, programInfo,rotateCamMatrix);
-    }
+    }*/
 }
 
 addEventListener("keydown", alertKey);
@@ -313,7 +363,6 @@ function CanMove(car)
 
 function alertKey(event) {
     let futureCar = new Collision2D(CarGameObject.x,CarGameObject.y,CarGameObject.r);
-    let speed = 100;
    if(event.key == "ArrowLeft") {
        futureCar.y += 0.05*Math.cos(angleRotateCar+ 0.035);
        futureCar.x += -0.05*Math.sin(angleRotateCar+0.035);
@@ -321,8 +370,8 @@ function alertKey(event) {
            angleRotateCar += 0.035;
            xCarPos += 0.05 * Math.cos(angleRotateCar);
            zCarPos += -0.05 * Math.sin(angleRotateCar);
-           playerPos.x = -xCarPos+5;
-           playerPos.z = -zCarPos;
+           //playerPos.x = -xCarPos+5;
+           //playerPos.z = -zCarPos;
        }
    }
    if(event.key == "ArrowRight") {
@@ -332,8 +381,8 @@ function alertKey(event) {
            angleRotateCar -= 0.035;
            xCarPos += 0.05 * Math.cos(angleRotateCar);
            zCarPos += -0.05 * Math.sin(angleRotateCar);
-           playerPos.x = -xCarPos+5;
-           playerPos.z = -zCarPos;
+           //playerPos.x = -xCarPos+5;
+           //playerPos.z = -zCarPos;
        }
    }
     if(event.key == "ArrowUp") {
@@ -342,8 +391,8 @@ function alertKey(event) {
         if(CanMove(futureCar)) {
             xCarPos += 0.05 * Math.cos(angleRotateCar);
             zCarPos += -0.05 * Math.sin(angleRotateCar);
-            playerPos.x = -xCarPos+5;
-            playerPos.z = -zCarPos;
+            //playerPos.x = -xCarPos+5;
+            //playerPos.z = -zCarPos;
         }
     }
     if(event.key == "ArrowDown") {
@@ -352,8 +401,8 @@ function alertKey(event) {
         if(CanMove(futureCar)) {
             xCarPos -= 0.05 * Math.cos(angleRotateCar);
             zCarPos -= -0.05 * Math.sin(angleRotateCar);
-            playerPos.x = -xCarPos+5;
-            playerPos.z = -zCarPos;
+            //playerPos.x = -xCarPos+5;
+            //playerPos.z = -zCarPos;
         }
     }
     if(event.key == "L") {
@@ -362,7 +411,6 @@ function alertKey(event) {
         } else {
             canLight2 = 1;
         }
-        console.log(canLight2);
     }
     if(event.key=="O")
     {
@@ -385,49 +433,54 @@ function alertKey(event) {
     {
         if(wallMapa.length + 9 - playerPos.x <0 || wallMapa.length+9-playerPos.x>wallMapa.length-1)
         {
-            playerPos.x += 0.01*speed;
+            playerPos.x += 1;
         }
         else// if(wallMapa[wallMapa.length + 9 - Math.floor(playerPos.x)][Math.floor(playerPos.z)]==0)
         {
-             playerPos.x += 0.01*speed;
+             playerPos.x += 1;
         }
+        //loadPos.x+=1;
     }
     if(event.key =="s")
     {
         if(wallMapa.length + 11 - playerPos.x <0 || wallMapa.length+11-playerPos.x>wallMapa.length-1)
         {
-            playerPos.x -= 0.01*speed;
+            playerPos.x -= 1;
         }
         else// if(wallMapa[wallMapa.length + 11 - Math.floor(playerPos.x)][Math.floor(playerPos.z)]==0)
         {
-            playerPos.x -= 0.01*speed;
+            playerPos.x -= 1;
         }
+        //loadPos.x-=1;
     }
     if(event.key =="a")
     {
         if(playerPos.z <0 || playerPos.z>wallMapa.length-1 || wallMapa.length + 10 - playerPos.x <0 || wallMapa.length+10-playerPos.x>wallMapa.length-1)
         {
-            playerPos.z-=0.01*speed;
+            playerPos.z-=1;
         }
         else// if(wallMapa[wallMapa.length + 10 - Math.floor(playerPos.x)][Math.floor(playerPos.z)-1]==0)
         {
-            playerPos.z-=0.01*speed;
+            playerPos.z-=1;
         }
+        //loadPos.y-=1;
     }
     if(event.key =="d")
     {
         if(playerPos.z <0 || playerPos.z>wallMapa.length-1 || wallMapa.length + 10 - playerPos.x <0 || wallMapa.length+10-playerPos.x>wallMapa.length-1)
         {
-            playerPos.z+=0.01*speed;
+            playerPos.z+=1;
         }
         else// if(wallMapa[wallMapa.length + 10 - Math.floor(playerPos.x)][Math.floor(playerPos.z)+1]==0)
         {
-            playerPos.z+=0.01*speed;
+            playerPos.z+=1;
         }
+        //loadPos.y+=1;
     }
     if(event.key=="q")
     {
         rotateCamMatrix[1]-=0.1;
+        console.log(rotateCamMatrix[1]);
     }
     if(event.key=="e")
     {

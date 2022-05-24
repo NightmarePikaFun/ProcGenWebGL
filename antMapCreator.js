@@ -29,8 +29,6 @@ export default class Ant{
 
 Ant.prototype.getStartPosition = function ()
 {
-    console.log("all start pos");
-    console.log(this.allAntStartPos);
     return this.antStartPosition;
 }
 
@@ -143,9 +141,6 @@ Ant.prototype.move = function (){
             }
         }
     }*/
-    //console.log("After ant move");
-    //console.log(this.mapWall);
-    //console.log(this.map);
     return this.mapWall;
 }
 
@@ -159,7 +154,7 @@ Ant.prototype.createBridge = function ()
     for(let k = 0; k <this.allAntStartPos.length-1;k++)
     {
         let iterator, iterator2;;
-        let p = Math.abs(this.allAntStartPos[k].x-this.allAntStartPos[k+1].x);
+        let p = Math.abs(this.allAntStartPos[k].x-this.allAntStartPos[k+1].x)+1;
         if(this.allAntStartPos[k].x> this.allAntStartPos[k+1].x){
             iterator = k+1;
         }
@@ -170,7 +165,7 @@ Ant.prototype.createBridge = function ()
         {
             this.map[this.allAntStartPos[iterator].x+p1][this.allAntStartPos[iterator].y]=1;
         }
-        let l = Math.abs(this.allAntStartPos[k].y-this.allAntStartPos[k+1].y);
+        let l = Math.abs(this.allAntStartPos[k].y-this.allAntStartPos[k+1].y)+1;
         if(this.allAntStartPos[k].y < this.allAntStartPos[k+1].y){
             iterator2 = k;
         }
@@ -182,8 +177,6 @@ Ant.prototype.createBridge = function ()
             this.map[this.allAntStartPos[iterator].x+p][this.allAntStartPos[iterator2].y+l1]=1;
         }
     }
-    console.log("Karta");
-    console.log(this.map);
 }
 
 Ant.prototype.createWall = function () {
