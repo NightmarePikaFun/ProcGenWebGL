@@ -121,6 +121,7 @@ const transformFunc =`
     );
     }
     
+    
     mat3 transformMatrixY(float ang){
         return mat3(
         cos(ang), -sin(ang), 0,
@@ -172,8 +173,8 @@ out vec3 toLight;
 
 void main() {
     vec4 vertexPositionEye4 = /*uViewMatrix */uModelViewMatrix * vec4(avertexPosition, 1.0);
-    vertexPositionEye4 = vec4(vertexPositionEye4.xyz * transformMatrix(0.5,-0.653,0.0),1.0);//
-    vertexPositionEye4+=vec4(camPos.xyz* transformMatrix(0.5,-0.653,0.),1.0);//
+    vertexPositionEye4 = vec4(vertexPositionEye4.xyz * transformMatrix(0.0,-0.653,0.),1.0);//transformMatrix(0.5,-0.653,0.0)
+    vertexPositionEye4+=vec4(camPos.xyz* transformMatrix(0.0,-0.653,0.),1.0);//
     vec3 vertexPositionEye3 = (vertexPositionEye4.xyz)/vertexPositionEye4.w ;
 
    
@@ -251,6 +252,7 @@ void main() {
     vec3 surfToLight = normalize(toLight);
     float tmpLight = max(dot(tmpNormal, surfToLight),0.0);
     color+= vec4(vec3(texture(uSampler,texCoord).xyz*vec3(0.3,0.2,0.0)*tmpLight*1.5)*carLight.carLight,1.0);
+
     
     
 

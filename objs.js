@@ -20,13 +20,13 @@ function makeF32ArrayBuffer(gl, array) {
 export function initMesh(gl, mesh, color, url) {
 
     let model = mat4.create();;
-    const _draw = (gl, programInfo) => {
+    const _draw = (gl, programInfo,rotateCamMatrix) => {
         gl.activeTexture(gl.TEXTURE1);
         const vertexPos = programInfo.attribLocations.vertexPosition;
         const modelViewMatrix = programInfo.uniformLocations.modelViewMatrix;
         gl.uniformMatrix4fv(modelViewMatrix, false, model);
         const viewMatrix = mat4.create();
-        mat4.lookAt(viewMatrix, [4.0, 3.0, 3.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0] )
+        mat4.lookAt(viewMatrix, [4.0, 3.0, 3.0], rotateCamMatrix, [0.0, 1.0, 0.0] )
         gl.uniformMatrix4fv(programInfo.uniformLocations.viewMatrix, false, viewMatrix);
         
         const nMatrix = mat3.create();

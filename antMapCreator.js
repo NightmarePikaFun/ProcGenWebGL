@@ -23,11 +23,14 @@ export default class Ant{
         this.antCounter = 0;
         this.antStartPosition = {x:0,y:0};
         this.moveStep = [{x:-1,y:0},{x:0,y:-1},{x:1,y:0},{x:0,y:1}]
+        this.allAntStartPos = [];
     }
 }
 
 Ant.prototype.getStartPosition = function ()
 {
+    console.log("all start pos");
+    console.log(this.allAntStartPos);
     return this.antStartPosition;
 }
 
@@ -50,6 +53,7 @@ Ant.prototype.move = function (){
     {
         this.antStartPosition = {x:position.x,y:position.y};
     }
+    this.allAntStartPos[this.antCounter]={x:position.x,y:position.y};
     this.antCounter++;
     let dir = 2;
     for(let i = 0; i<this.iteration;i++)
@@ -111,7 +115,7 @@ Ant.prototype.move = function (){
             }
         }
     }
-    for(let i  = 0 ; i<this.height; i++)
+    /*for(let i  = 0 ; i<this.height; i++)
     {
         for(let j = 0; j<this.width;j++)
         {
@@ -138,9 +142,75 @@ Ant.prototype.move = function (){
                 }
             }
         }
-    }
+    }*/
     //console.log("After ant move");
     //console.log(this.mapWall);
     //console.log(this.map);
     return this.mapWall;
+}
+
+Ant.prototype.getMapWall = function ()
+{
+    return this.mapWall;
+}
+
+Ant.prototype.createBridge = function ()
+{
+    for(let k = 0; k <this.allAntStartPos.length-1;k++)
+    {
+        let iterator, iterator2;;
+        let p = Math.abs(this.allAntStartPos[k].x-this.allAntStartPos[k+1].x);
+        if(this.allAntStartPos[k].x> this.allAntStartPos[k+1].x){
+            iterator = k+1;
+        }
+        else{
+            iterator = k;
+        }
+        for(let p1 = 0; p1<p;p1++)
+        {
+            this.map[this.allAntStartPos[iterator].x+p1][this.allAntStartPos[iterator].y]=1;
+        }
+        let l = Math.abs(this.allAntStartPos[k].y-this.allAntStartPos[k+1].y);
+        if(this.allAntStartPos[k].y < this.allAntStartPos[k+1].y){
+            iterator2 = k;
+        }
+        else{
+            iterator2 = k+1;
+        }
+        for(let l1 = 0; l1<l;l1++)
+        {
+            this.map[this.allAntStartPos[iterator].x+p][this.allAntStartPos[iterator2].y+l1]=1;
+        }
+    }
+    console.log("Karta");
+    console.log(this.map);
+}
+
+Ant.prototype.createWall = function () {
+    for (let i = 0; i < this.height; i++) {
+        for (let j = 0; j < this.width; j++) {
+            if (this.map[i][j] == 0) {
+                if (i - 1 >= 0) {
+                    if (this.map[i - 1][j] == 1) {
+                        this.mapWall[i][j] = 1;
+                    }
+                }
+                if (j - 1 >= 0) {
+                    if (this.map[i][j - 1] == 1) {
+                        this.mapWall[i][j] = 1;
+                    }
+                }
+                if (i + 1 < this.height) {
+                    if (this.map[i + 1][j] == 1) {
+                        this.mapWall[i][j] = 1;
+                    }
+                }
+                if (j + 1 < this.width) {
+                    if (this.map[i][j + 1] == 1) {
+                        this.mapWall[i][j] = 1;
+                    }
+                }
+            }
+        }
+    }
 }

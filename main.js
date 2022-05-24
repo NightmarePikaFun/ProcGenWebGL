@@ -24,6 +24,8 @@ let aY=3.1;
 let GameObject = [];
 let CarGameObject;
 let playerPos = {x:0.0, y:0.0, z:0.0};
+let rotateCamMatrix = [0.0,0.0,0.0];
+let bufferMatrix;
 
 const OBJ = require('webgl-obj-loader');
 let wallMapa = [];
@@ -73,13 +75,22 @@ window.onload = function main() {
     let startPos = map.getStartPosition();
     console.log(startPos);
     playerPos.x = 100+10-startPos.x;
+    xCarPos = -playerPos.x+10;
     playerPos.z =  startPos.y;
+    zCarPos = -playerPos.z;
     console.log(playerPos);
+    console.log("car");
+    console.log([xCarPos,zCarPos]);
     map.setLandSize(Math.random()*400);
     mapa = map.move();
     map.setLandSize(Math.random()*500);
     mapa = map.move();
+    map.createBridge();
+    map.createWall();
+    mapa = map.getMapWall();
     drawMapContext.lineWidth = 1;
+    bufferMatrix = Array(100).fill(Array(100).fill(0));
+    console.log(bufferMatrix);
     for(let i = 0; i<mapa.length;i++)
     {
         for(let j = 0; j<mapa[i].length;j++)
@@ -90,6 +101,7 @@ window.onload = function main() {
             }
             else{
                 drawMapContext.strokeStyle = "rgb(25,255,0)";
+                bufferMatrix[i][j]=buffers.length-1;
                 buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]));
                 buffers[buffers.length-1].setTranslateScale([-mapa.length+i+1,0.5,-j],[0.5,0.5,0.5],0);
             }
@@ -99,6 +111,7 @@ window.onload = function main() {
             drawMapContext.stroke();
         }
     }
+
     //
     window.onkeydown = (e) => {
         drawScene(gl, programInfo, buffers);
@@ -183,7 +196,7 @@ function setupLights(gl, {uniformLocations}) {
     gl.uniform3fv(uniformLocations.lightSpecular, [0.5, 0.5, 0.5]);// 1.0 1.0 1.0
 
     gl.uniform1f(uniformLocations.lightOn2,canLight2);
-    gl.uniform3fv(uniformLocations.lightPosition2, [0.0, -10.0, 0.0]);
+    gl.uniform3fv(uniformLocations.lightPosition2, [0.0, -30.0,0.0]);
     gl.uniform3fv(uniformLocations.lightAmbient2, [0.2, 0.1, 0.0]);
     gl.uniform3fv(uniformLocations.lightDiffuse2, [0.1, 0.1, 0.1]);
     gl.uniform3fv(uniformLocations.lightSpecular2, [0.5, 0.5, 0.5]);
@@ -218,6 +231,7 @@ function drawScene(gl, programInfo, buffers) {
     gl.clearDepth(1.0);
     gl.depthFunc(gl.LEQUAL);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    //
 
     //Camera
     gl.uniform4fv(programInfo.uniformLocations.cameraPos, [playerPos.x,0.0,playerPos.z,1.0,])
@@ -236,8 +250,9 @@ function drawScene(gl, programInfo, buffers) {
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial2);
     gl.uniform1i(programInfo.uniformLocations.uSampler, 1);
 
+    console.log([xCarPos,zCarPos]);
     buffers[0].setTranslateScale([xCarPos,0.0,zCarPos],[0.1,0.1,0.1],angleRotateCar, "texture.png");
-    buffers[0].draw(gl, programInfo);
+    buffers[0].draw(gl, programInfo,rotateCamMatrix);
     let carXY = CarGameObject.getLightXY();
     gl.uniform3fv(programInfo.uniformLocations.carPosition,[carXY[1],0.0,carXY[0]]);
     //console.log(carXY);
@@ -247,7 +262,7 @@ function drawScene(gl, programInfo, buffers) {
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial);
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
     buffers[1].setTranslateScale(currentPose[1],[0.5,0.5,0.5],0.0);
-    buffers[1].draw(gl, programInfo);
+    buffers[1].draw(gl, programInfo,rotateCamMatrix);
 
     gl.activeTexture(gl.TEXTURE2);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);
@@ -259,18 +274,23 @@ function drawScene(gl, programInfo, buffers) {
 
     gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
     buffers[2].setTranslateScale([0.0,-1.0,0.0],[0.5,0.5,0.5],0.0);
-    buffers[2].draw(gl, programInfo);
+    buffers[2].draw(gl, programInfo,rotateCamMatrix);
 
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial4);
     gl.uniform1i(programInfo.uniformLocations.uSampler, 3);
     buffers[3].setTranslateScale(currentPose[2],[0.1,0.1,0.1],0.0);
-    buffers[3].draw(gl, programInfo);
+    buffers[3].draw(gl, programInfo,rotateCamMatrix);
+
+    //tmpCode
+
+    //
+
     for(let i = 4; i <buffers.length;i++)
     {
         gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
         //buffers[i].setTranslateScale([i-3,0.0,0.0],[0.5,0.5,0.5],0.0);
-        buffers[i].draw(gl, programInfo);
+        buffers[i].draw(gl, programInfo,rotateCamMatrix);
     }
 }
 
@@ -291,43 +311,52 @@ function CanMove(car)
     return can;
 }
 
-function alertKey(e) {
+function alertKey(event) {
     let futureCar = new Collision2D(CarGameObject.x,CarGameObject.y,CarGameObject.r);
-   if(e.key == "ArrowLeft") {
+    let speed = 100;
+   if(event.key == "ArrowLeft") {
        futureCar.y += 0.05*Math.cos(angleRotateCar+ 0.035);
        futureCar.x += -0.05*Math.sin(angleRotateCar+0.035);
        if (CanMove(futureCar)) {
            angleRotateCar += 0.035;
            xCarPos += 0.05 * Math.cos(angleRotateCar);
            zCarPos += -0.05 * Math.sin(angleRotateCar);
+           playerPos.x = -xCarPos+5;
+           playerPos.z = -zCarPos;
        }
    }
-   if(e.key == "ArrowRight") {
+   if(event.key == "ArrowRight") {
        futureCar.y += 0.05*Math.cos(angleRotateCar-0.035);
        futureCar.x += -0.05*Math.sin(angleRotateCar-0.035);
        if (CanMove(futureCar)) {
            angleRotateCar -= 0.035;
            xCarPos += 0.05 * Math.cos(angleRotateCar);
            zCarPos += -0.05 * Math.sin(angleRotateCar);
+           playerPos.x = -xCarPos+5;
+           playerPos.z = -zCarPos;
        }
    }
-    if(e.key == "ArrowUp") {
+    if(event.key == "ArrowUp") {
         futureCar.y += 0.05*Math.cos(angleRotateCar);
         futureCar.x += -0.05*Math.sin(angleRotateCar);
         if(CanMove(futureCar)) {
             xCarPos += 0.05 * Math.cos(angleRotateCar);
             zCarPos += -0.05 * Math.sin(angleRotateCar);
+            playerPos.x = -xCarPos+5;
+            playerPos.z = -zCarPos;
         }
     }
-    if(e.key == "ArrowDown") {
+    if(event.key == "ArrowDown") {
         futureCar.y -= 0.05*Math.cos(angleRotateCar);
         futureCar.x -= -0.05*Math.sin(angleRotateCar);
         if(CanMove(futureCar)) {
             xCarPos -= 0.05 * Math.cos(angleRotateCar);
             zCarPos -= -0.05 * Math.sin(angleRotateCar);
+            playerPos.x = -xCarPos+5;
+            playerPos.z = -zCarPos;
         }
     }
-    if(e.key == "L") {
+    if(event.key == "L") {
         if (canLight2 > 0) {
             canLight2 = 0;
         } else {
@@ -335,7 +364,7 @@ function alertKey(e) {
         }
         console.log(canLight2);
     }
-    if(e.key=="O")
+    if(event.key=="O")
     {
         if (sunLight > 0.0) {
             sunLight = 0.0;
@@ -344,7 +373,7 @@ function alertKey(e) {
         }
     }
 
-    if(e.key =="K")
+    if(event.key =="K")
     {
         if (carLight > 0.0) {
             carLight = 0.0;
@@ -352,51 +381,57 @@ function alertKey(e) {
             carLight = 1.0;
         }
     }
-    if(e.key =="w")
+    if(event.key =="w")
     {
-        console.log(playerPos);
-        console.log(wallMapa.length+9-playerPos.x)
         if(wallMapa.length + 9 - playerPos.x <0 || wallMapa.length+9-playerPos.x>wallMapa.length-1)
         {
-            playerPos.x += 1;
+            playerPos.x += 0.01*speed;
         }
-        else if(wallMapa[wallMapa.length + 9 - playerPos.x][playerPos.z]==0)
+        else// if(wallMapa[wallMapa.length + 9 - Math.floor(playerPos.x)][Math.floor(playerPos.z)]==0)
         {
-             playerPos.x += 1;
+             playerPos.x += 0.01*speed;
         }
     }
-    if(e.key =="s")
+    if(event.key =="s")
     {
         if(wallMapa.length + 11 - playerPos.x <0 || wallMapa.length+11-playerPos.x>wallMapa.length-1)
         {
-            playerPos.x -= 1;
+            playerPos.x -= 0.01*speed;
         }
-        else if(wallMapa[wallMapa.length + 11 - playerPos.x][playerPos.z]==0)
+        else// if(wallMapa[wallMapa.length + 11 - Math.floor(playerPos.x)][Math.floor(playerPos.z)]==0)
         {
-            playerPos.x -= 1;
+            playerPos.x -= 0.01*speed;
         }
     }
-    if(e.key =="a")
+    if(event.key =="a")
     {
         if(playerPos.z <0 || playerPos.z>wallMapa.length-1 || wallMapa.length + 10 - playerPos.x <0 || wallMapa.length+10-playerPos.x>wallMapa.length-1)
         {
-            playerPos.z-=1;
+            playerPos.z-=0.01*speed;
         }
-        else if(wallMapa[wallMapa.length + 10 - playerPos.x][playerPos.z-1]==0)
+        else// if(wallMapa[wallMapa.length + 10 - Math.floor(playerPos.x)][Math.floor(playerPos.z)-1]==0)
         {
-            playerPos.z-=1;
+            playerPos.z-=0.01*speed;
         }
     }
-    if(e.key =="d")
+    if(event.key =="d")
     {
         if(playerPos.z <0 || playerPos.z>wallMapa.length-1 || wallMapa.length + 10 - playerPos.x <0 || wallMapa.length+10-playerPos.x>wallMapa.length-1)
         {
-            playerPos.z+=1;
+            playerPos.z+=0.01*speed;
         }
-        else if(wallMapa[wallMapa.length + 10 - playerPos.x][playerPos.z+1]==0)
+        else// if(wallMapa[wallMapa.length + 10 - Math.floor(playerPos.x)][Math.floor(playerPos.z)+1]==0)
         {
-            playerPos.z+=1;
+            playerPos.z+=0.01*speed;
         }
+    }
+    if(event.key=="q")
+    {
+        rotateCamMatrix[1]-=0.1;
+    }
+    if(event.key=="e")
+    {
+        rotateCamMatrix[1]+=0.1;
     }
     xLightPos = futureCar.y;
     zLightPos = futureCar.x;
