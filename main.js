@@ -85,7 +85,8 @@ window.onload = function main() {
             }
             else{
                 drawMapContext.strokeStyle = "rgb(25,255,0)";
-                //buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]))
+                buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]));
+                buffers[buffers.length-1].setTranslateScale([i,0,j],[0.5,0.5,0.5],0);
             }
             drawMapContext.beginPath();
             drawMapContext.moveTo(i,j);
@@ -261,8 +262,9 @@ function drawScene(gl, programInfo, buffers) {
     for(let i = 4; i <buffers.length;i++)
     {
         gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
-        buffers[i].setTranslateScale([i-3,0.0,0.0],[0.5,0.5,0.5],0.0);
+        //buffers[i].setTranslateScale([i-3,0.0,0.0],[0.5,0.5,0.5],0.0);
         buffers[i].draw(gl, programInfo);
+        console.log("+");
     }
 }
 
@@ -346,11 +348,11 @@ function alertKey(e) {
     }
     if(e.key =="w")
     {
-        playerPos.x+=0.1;
+        playerPos.x+=1;
     }
     if(e.key =="s")
     {
-        playerPos.x-=0.1;
+        playerPos.x-=1;
     }
     if(e.key =="a")
     {

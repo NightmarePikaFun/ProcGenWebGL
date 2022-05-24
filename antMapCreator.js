@@ -7,12 +7,15 @@ export default class Ant{
 
         this.map = [];
         this.pathMap=[];
+        this.mapWall = [];
         for(let i = 0; i <this.height;i++)
         {
+            this.mapWall[i] = [];
             this.map[i] = [];
             this.pathMap[i]=[];
             for(let j = 0; j <this.width;j++)
             {
+                this.mapWall[i][j] = 0;
                 this.map[i][j]=0;
                 this.pathMap[i][j]=0;
             }
@@ -100,8 +103,36 @@ Ant.prototype.move = function (){
             }
         }
     }
+    for(let i  = 0 ; i<this.height; i++)
+    {
+        for(let j = 0; j<this.width;j++)
+        {
+            if(this.map[i][j]==0) {
+                if (i - 1 >= 0) {
+                    if (this.map[i - 1][j] == 1) {
+                        this.mapWall[i][j] = 1;
+                    }
+                }
+                if (j - 1 >= 0) {
+                    if (this.map[i][j - 1] == 1) {
+                        this.mapWall[i][j] = 1;
+                    }
+                }
+                if (i + 1 < this.height) {
+                    if (this.map[i + 1][j] == 1) {
+                        this.mapWall[i][j] = 1;
+                    }
+                }
+                if (j + 1 < this.width) {
+                    if (this.map[i][j + 1] == 1) {
+                        this.mapWall[i][j] = 1;
+                    }
+                }
+            }
+        }
+    }
     console.log("After ant move");
-    console.log(this.pathMap);
+    console.log(this.mapWall);
     console.log(this.map);
-    return this.map;
+    return this.mapWall;
 }
