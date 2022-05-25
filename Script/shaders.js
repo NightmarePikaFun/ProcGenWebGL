@@ -198,7 +198,7 @@ void main() {
     lightDir2 = lightDirection2;
     lightDir3 = lightDirection3;
     distance = length(lightDirection);
-    viewDir = vec3(4.0,3.0,3.0)-vertexPositionEye3;
+    viewDir = vertexPositionEye3;
     vertexPos3 = vertexPositionEye3;
 }
 `;

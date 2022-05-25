@@ -2,14 +2,14 @@
 import {initShaderProgram, loadTexture} from './openGLfuncs';
 import {vsSource, fsSource} from './shaders';
 import {initMesh} from './objs'
-import {sphere} from "./sphere";
-import {model} from "./model";
+import {sphere} from "../Model/sphere";
+import {model} from "../Model/model";
 import Collision2D from "./collision";
-import {platform} from "./platform";
-import {mushrooms} from "./mushrooms";
+import {platform} from "../Model/platform";
+import {mushrooms} from "../Model/mushrooms";
 
 import Ant from "./antMapCreator";
-import {cubeDefualt} from "./cube";
+import {cubeDefualt} from "../Model/cube";
 let endGameBool = true;
 
 let finalGameImg = new Image();

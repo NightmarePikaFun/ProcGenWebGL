@@ -1,6 +1,6 @@
 "use strict";
 
-import { sphere } from './sphere';
+import { sphere } from '../Model/sphere';
 import {initShaderProgram, loadTexture} from './openGLfuncs';
 const OBJ = require('webgl-obj-loader');
 

@@ -2,7 +2,7 @@
   "name": "Lab02",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "Script/main.js",
   "scripts": {
     "start": "parcel index.html"
   },
