@@ -1,4 +1,4 @@
-# Game with procedural generation game on WebGL
+# Game with procedural generation on WebGL
 
 Instal and load project:
 
