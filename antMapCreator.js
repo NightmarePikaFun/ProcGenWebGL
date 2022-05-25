@@ -8,22 +8,30 @@ export default class Ant{
         this.map = [];
         this.pathMap=[];
         this.mapWall = [];
+        this.lootMap = [];
         for(let i = 0; i <this.height;i++)
         {
             this.mapWall[i] = [];
             this.map[i] = [];
             this.pathMap[i]=[];
+            this.lootMap[i]=[];
             for(let j = 0; j <this.width;j++)
             {
                 this.mapWall[i][j] = 0;
                 this.map[i][j]=0;
                 this.pathMap[i][j]=0;
+                this.lootMap[i][j]=0;
             }
         }
         this.antCounter = 0;
         this.antStartPosition = {x:0,y:0};
         this.moveStep = [{x:-1,y:0},{x:0,y:-1},{x:1,y:0},{x:0,y:1}]
         this.allAntStartPos = [];
+        this.moveSpeedGift = 0;
+        this.speedGiftPos = [];
+        this.dropCount = 0;
+        this.portalShard = 0;
+        this.protalShardPos = [];
     }
 }
 
@@ -54,6 +62,8 @@ Ant.prototype.move = function (){
     this.allAntStartPos[this.antCounter]={x:position.x,y:position.y};
     this.antCounter++;
     let dir = 2;
+    let shardChance = 0.1;
+    let speedChance = 0.9;
     for(let i = 0; i<this.iteration;i++)
     {
         if(this.pathMap[position.x][position.y]==1)
@@ -69,19 +79,19 @@ Ant.prototype.move = function (){
             position.y += this.moveStep[dir].y;
             if(position.x<0)
             {
-                position.x = this.width-1;
+                position.x = 0;
             }
             if(position.x>this.width-1)
             {
-                position.x = 0;
+                position.x = this.width-1;
             }
             if(position.y<0)
             {
-                position.y = this.height-1;
+                position.y = 0;
             }
             if(position.y>this.height-1)
             {
-                position.y = 0;
+                position.y = this.height-1;
             }
         }
         else{
@@ -111,6 +121,68 @@ Ant.prototype.move = function (){
             {
                 position.y = 0;
             }
+        }
+        if(Math.random()>speedChance && this.dropCount<this.antCounter && this.lootMap[position.x][position.y]==0)
+        {
+            this.moveSpeedGift++;
+            this.dropCount++;
+            this.lootMap[position.x][position.y]=2;
+            //this.mapWall[position.x][position.y]=2;
+            for(let i = -3; i<3;i++)
+            {
+                for(let j =-3;j<3;j++)
+                {
+                    let x = position.x+i,y = position.y+j;
+                    if(x<0 || x>99)
+                    {
+                        x = position.x;
+                    }
+                    if(y<0||y>99)
+                    {
+                        y = position.y;
+                    }
+                    if(y!= position.y || x!=position.x) {
+                        if(this.lootMap[x][y]!=3) {
+                            this.lootMap[x][y] = 9;
+                        }
+                    }
+                }
+            }
+        }
+        else if(this.lootMap[position.x][position.y]!=0)
+        {
+            speedChance-=0.1;
+        }
+        if(Math.random()<shardChance && this.dropCount<this.antCounter && this.lootMap[position.x][position.y]==0){
+            this.portalShard++;
+            this.dropCount++;
+            this.lootMap[position.x][position.y]=3;
+            //this.mapWall[position.x][position.y]=3;
+            for(let i = -3; i<3;i++)
+            {
+                for(let j =-3;j<3;j++)
+                {
+                    let x = position.x+i,y = position.y+j;
+                    if(x<0 || x>99)
+                    {
+                        x = position.x;
+                    }
+                    if(y<0||y>99)
+                    {
+                        y = position.y;
+                    }
+                    if(y!= position.y || x!=position.x) {
+                        if(this.lootMap[x][y]!=2) {
+                            this.lootMap[x][y] = 9;
+                        }
+                    }
+                }
+            }
+            console.log("--");
+        }
+        else if(this.lootMap[position.x][position.y]!=0)
+        {
+            shardChance+=0.1;
         }
     }
     /*for(let i  = 0 ; i<this.height; i++)
@@ -146,6 +218,7 @@ Ant.prototype.move = function (){
 
 Ant.prototype.getMapWall = function ()
 {
+    console.log(this.dropCount, this.portalShard,this.moveSpeedGift);
     return this.mapWall;
 }
 
