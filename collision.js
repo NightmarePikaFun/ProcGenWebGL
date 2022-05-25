@@ -27,8 +27,6 @@ export default class Collision2D {
 
 
     intersects(collision){
-        console.log(this.x,this.y);
-        console.log(collision.x, collision.y);
         return Math.sqrt((collision.x - this.x)*(collision.x - this.x)+
             (collision.y - this.y)*(collision.y - this.y))<this.r+collision.r
     }

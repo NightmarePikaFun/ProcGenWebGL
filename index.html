@@ -19,14 +19,21 @@
       <div>
         <canvas class="mapa" id="map_canvas" width="200" height="800"></canvas>
       </div>
+      <div>
+        <img id="Lenin" src="lenin.png" width="0" height="0"></img>
+      </div>
 
     </div>
     <script src="./main.js"></script>
     <audio id="sound" src="lose.mp3"></audio>
+    <audio id="sound2" src="carMove.mp3"></audio>
+    <audio id="sound3" src="redAlert.mp3"></audio>
+    <audio id="mainSound" src="mainMusic.mp3" autoplay="autoplay" loop="loop" volume></audio>
     <img id="carTexture" src="carTexture.png" style="display:none;">
     <img id="orange" src="texture.png" style="display:none;">
     <img id="groundTexture" src="cobble.png" style="display: none;">
     <img id="tree" src="texture2.png" style="display: none;">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
             integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
             crossorigin="anonymous" defer>

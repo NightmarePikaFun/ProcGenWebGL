@@ -10,7 +10,9 @@ import {mushrooms} from "./mushrooms";
 
 import Ant from "./antMapCreator";
 import {cubeDefualt} from "./cube";
+let endGameBool = true;
 
+let finalGameImg = new Image();
 let buffers;
 let angleRotateCar = 0.0;
 let zCarPos = 0.0, xCarPos = 0.0;
@@ -30,10 +32,22 @@ let wallMAtrix;
 let loadPos = {x:0,y:0};
 let _startingCarPosition;
 let firsStart = true;
+let bonusCarSpeed = 1.0;
+
+//Bonus and endgame
+let shardPos = [];
+let shardActive = [];
+let speedPos = [];
+let speedActive = [];
+let endPortalPoints = [];
+let gameModelPos = [];
+
 
 const OBJ = require('webgl-obj-loader');
 let wallMapa = [];
 window.onload = function main() {
+    const mainMusic = document.getElementById("mainSound");
+    mainMusic.volume = 0.1;
     const canvas = document.querySelector("#gl_canvas");
     const gl = canvas.getContext("webgl2");// Получаем контекст webgl2
     const drawCanvas = document.querySelector("#map_canvas");
@@ -57,10 +71,6 @@ window.onload = function main() {
         initMesh(gl, new OBJ.Mesh(model),[0.2,0.3,0.7,1.0]),//1
         initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//2
         initMesh(gl, new OBJ.Mesh(mushrooms),[0.2,0.0,0.7,1.0]),//3
-        // initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//4
-        // initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//5
-        // initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//6
-        // initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]),//7
     ];// Инициализируем буфер
    //SetStartPosition
 
@@ -68,10 +78,6 @@ window.onload = function main() {
     buffers[1].setTranslateScale(currentPose[1],[0.1,0.1,0.1],0);
     buffers[2].setTranslateScale([0.0,0.0,0.0],[1.0,1.0,1.0],0);
     buffers[3].setTranslateScale(currentPose[2],[0.01,0.01,0.01],0);
-    // buffers[4].setTranslateScale([1.0,0.0,0.0],[1.0,1.0,1.0],0);
-    // buffers[5].setTranslateScale([2.0,0.0,0.0],[1.0,1.0,1.0],0);
-    // buffers[6].setTranslateScale([3.0,0.0,0.0],[1.0,1.0,1.0],0);
-    // buffers[7].setTranslateScale([4.0,0.0,0.0],[1.0,1.0,1.0],0);
 
     //Ant
     let map = new Ant(10,100,100,Math.random()*1000);
@@ -84,7 +90,7 @@ window.onload = function main() {
     playerPos.z =  startPos.y;
     zCarPos = -playerPos.z;
     _startingCarPosition = {x:xCarPos,y:zCarPos};
-    GameObject[0] = new Collision2D(_startingCarPosition.x-2,_startingCarPosition.y,0.5);
+    //GameObject[0] = new Collision2D(_startingCarPosition.x-2,_startingCarPosition.y,0.5);
     map.setLandSize(Math.random()*1000);
     mapa = map.move();
     map.setLandSize(Math.random()*1000);
@@ -103,7 +109,29 @@ window.onload = function main() {
     map.createWall();
     mapa = map.getMapWall();
     drawMapContext.lineWidth = 1;
-    let number = 4;
+    shardPos = map.getShardPoint();
+    if(shardPos.length<=1)
+    {
+        location.reload()
+    }
+    speedPos = map.getSpeedGiftPoint();
+    endPortalPoints = map.getAllStarPoint();
+    console.log(shardPos.length);
+    for(let i = 0; i<shardPos.length;i++)
+    {
+        shardActive.push(true);
+        gameModelPos.push({x:-(110-shardPos[i].x)+10,y:-shardPos[i].y});
+        GameObject[i] = new Collision2D(-(110-shardPos[i].x)+10,-shardPos[i].y,0.5);
+        buffers.push(initMesh(gl, new OBJ.Mesh(mushrooms),[0.2,0.0,0.7,1.0]));
+    }
+    for(let i = 0; i<speedPos.length;i++)
+    {
+        speedActive.push(true);
+        gameModelPos.push({x:-(110-speedPos[i].x)+10,y:-speedPos[i].y});
+        speedGameObject[i] = new Collision2D(-(110-speedPos[i].x)+10,-speedPos[i].y,0.5);
+        buffers.push(initMesh(gl, new OBJ.Mesh(mushrooms),[0.2,0.0,0.7,1.0]));
+    }
+    let number = 12;//Номер старта стен
     wallMAtrix=[];
     for(let i = 0 ; i<mapa.length;i++)
     {
@@ -141,7 +169,14 @@ window.onload = function main() {
             drawMapContext.stroke();
         }
     }
-
+    buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]));
+    buffers[buffers.length-1].setTranslateScale([-50,0.5,1.0],[50.0,0.5,0.5],0);
+    buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]));
+    buffers[buffers.length-1].setTranslateScale([-50,0.5,-100.0],[50.0,0.5,0.5],0);
+    buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]));
+    buffers[buffers.length-1].setTranslateScale([1.0,0.5,-50.0],[0.5,0.5,50.0],0);
+    buffers.push(initMesh(gl, new OBJ.Mesh(cubeDefualt),[1.0,1.0,1.0,1.0]));
+    buffers[buffers.length-1].setTranslateScale([-100.0,0.5,-50.0],[0.5,0.5,50.],0);
     //
     window.onkeydown = (e) => {
         drawScene(gl, programInfo, buffers);
@@ -257,7 +292,7 @@ function setupCarLight(gl,{uniformLocations},carLightPos)
 }
 
 function drawScene(gl, programInfo, buffers) {
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);// Чистим экран
+    gl.clearColor(0.1, 0.1, 0.1, 1.0);// Чистим экран
     gl.clearDepth(1.0);
     gl.depthFunc(gl.LEQUAL);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -303,18 +338,40 @@ function drawScene(gl, programInfo, buffers) {
     buffers[2].setTranslateScale([0.0,-1.0,0.0],[0.5,0.5,0.5],0.0);
     buffers[2].draw(gl, programInfo,rotateCamMatrix);
 
-    gl.activeTexture(gl.TEXTURE3);
+    /*gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial4);
     gl.uniform1i(programInfo.uniformLocations.uSampler, 3);
     buffers[3].setTranslateScale(currentPose[2],[0.1,0.1,0.1],0.0);
-    buffers[3].draw(gl, programInfo,rotateCamMatrix);
+    buffers[3].draw(gl, programInfo,rotateCamMatrix);*/
 
+    for(let i = 4; i <4+shardPos.length;i++)
+    {
+        if(shardActive[i-4]) {
+            gl.activeTexture(gl.TEXTURE3);
+            gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial4);//programInfo.textures.textureMaterial);
+            gl.uniform1i(programInfo.uniformLocations.uSampler, 3);
+            buffers[i].setTranslateScale([gameModelPos[i - 4].x, 0, gameModelPos[i - 4].y], [0.1, 0.1, 0.1], 0.0);
+            buffers[i].draw(gl, programInfo, rotateCamMatrix);
+        }
+    }
+    for(let i = 4+shardPos.length; i <4+shardPos.length+speedPos.length;i++)
+    {
+        if(speedActive[i-4-shardPos.length]) {
+            gl.activeTexture(gl.TEXTURE3);
+            gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial);//programInfo.textures.textureMaterial);
+            gl.uniform1i(programInfo.uniformLocations.uSampler, 3);
+            buffers[i].setTranslateScale([gameModelPos[i - 4].x, 0, gameModelPos[i - 4].y], [0.1, 0.1, 0.1], 0.0);
+            buffers[i].draw(gl, programInfo, rotateCamMatrix);
+        }
+    }
     // console.log([playerPos.x,playerPos.z]);
     // console.log([Math.floor(-xCarPos+8),Math.floor(zCarPos+0.5)]);
     //tmpCode
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, programInfo.textures.textureMaterial4);
     if(firsStart)
     {
-        for(let i = 4; i <buffers.length;i++)
+        for(let i = 12; i <buffers.length-4;i++)
         {
             gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
             buffers[i].draw(gl, programInfo, rotateCamMatrix);
@@ -323,7 +380,7 @@ function drawScene(gl, programInfo, buffers) {
     }
     else {
 
-        for (let i = 100 - Math.floor(-xCarPos+8)-10; i < 100 - Math.floor(-xCarPos+8) + 10; i++) {
+        for (let i = 100 - Math.floor(-xCarPos+8)-9; i < 100 - Math.floor(-xCarPos+8) + 13; i++) {
             if (i < 0) {
                 continue;
             }
@@ -343,6 +400,15 @@ function drawScene(gl, programInfo, buffers) {
                 }
             }
         }
+        gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
+        buffers[buffers.length-4].draw(gl, programInfo, rotateCamMatrix);
+        gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
+        buffers[buffers.length-3].draw(gl, programInfo, rotateCamMatrix);
+        gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
+        buffers[buffers.length-2].draw(gl, programInfo, rotateCamMatrix);
+        gl.uniform1i(programInfo.uniformLocations.uSampler, 2);
+        buffers[buffers.length-1].draw(gl, programInfo, rotateCamMatrix);
+
     }
     //
 
@@ -359,15 +425,34 @@ addEventListener("keydown", alertKey);
 function CanMove(car)
 {
     let can = true;
-    GameObject.forEach(object => {
-        if(car.intersects(object)){
-            console.log("eeeeeeeee");
-            //alert("СКРИМЕР АААААААА!");
-            document.getElementById("sound").play();
-            can = false;
-            return;
+    for(let i = 0; i <GameObject.length;i++)
+    {
+        if(car.intersects(GameObject[i]))
+        {
+            if(shardActive[i]) {
+                console.log("shard!");
+                //alert("СКРИМЕР АААААААА!");
+                document.getElementById("sound").play();
+                can = false;
+                shardActive[i] = false;
+            }
         }
-    })
+    }
+    for(let i = 0; i <speedGameObject.length;i++)
+    {
+        if(car.intersects(speedGameObject[i]))
+        {
+            if(speedActive[i]) {
+                bonusCarSpeed+=0.5;
+                console.log("speed!");
+                //alert("СКРИМЕР АААААААА!");
+                document.getElementById("sound2").play();
+                can = false;
+                speedActive[i] = false;
+
+            }
+        }
+    }
     return can;
 }
 
@@ -376,45 +461,57 @@ function CanMove(car)
 function alertKey(event) {
     let futureCar = new Collision2D(xCarPos,zCarPos,CarGameObject.r);
    if(event.key == "ArrowLeft") {
-       futureCar.y += 0.05*Math.cos(angleRotateCar+ 0.035);
-       futureCar.x += -0.05*Math.sin(angleRotateCar+0.035);
-       if (CanMove(futureCar) && wallMapa[Math.floor(99.4+futureCar.x)][Math.floor(-futureCar.y+0.7)]==0) {
-           angleRotateCar += 0.035;
-           xCarPos += 0.05 * Math.cos(angleRotateCar);
-           zCarPos += -0.05 * Math.sin(angleRotateCar);
-           playerPos.x = -xCarPos+7;
-           playerPos.z = -zCarPos;
+       futureCar.y += 0.05*Math.cos(angleRotateCar+ 0.035)*bonusCarSpeed;
+       futureCar.x += -0.05*Math.sin(angleRotateCar+0.035)*bonusCarSpeed;
+       if(!(Math.floor(99.4+futureCar.x)<0 || Math.floor(99.4+futureCar.x)>99
+           || Math.floor(-futureCar.y+0.7)<0 || Math.floor(-futureCar.y+0.7)>99)) {
+           if (wallMapa[Math.floor(99.4 + futureCar.x)][Math.floor(-futureCar.y + 0.7)] == 0) {
+               angleRotateCar += 0.035;
+               xCarPos += 0.05 * Math.cos(angleRotateCar) * bonusCarSpeed;
+               zCarPos += -0.05 * Math.sin(angleRotateCar) * bonusCarSpeed;
+               playerPos.x = -xCarPos + 7;
+               playerPos.z = -zCarPos;
+           }
        }
    }
    if(event.key == "ArrowRight") {
-       futureCar.y += 0.05*Math.cos(angleRotateCar-0.035);
-       futureCar.x += -0.05*Math.sin(angleRotateCar-0.035);
-       if (CanMove(futureCar) && wallMapa[Math.floor(99.4+futureCar.x)][Math.floor(-futureCar.y+0.2)]==0) {
-           angleRotateCar -= 0.035;
-           xCarPos += 0.05 * Math.cos(angleRotateCar);
-           zCarPos += -0.05 * Math.sin(angleRotateCar);
-           playerPos.x = -xCarPos+7;
-           playerPos.z = -zCarPos;
+       futureCar.y += 0.05*Math.cos(angleRotateCar-0.035)*bonusCarSpeed;
+       futureCar.x += -0.05*Math.sin(angleRotateCar-0.035)*bonusCarSpeed;
+       if(!(Math.floor(99.4+futureCar.x)<0 || Math.floor(99.4+futureCar.x)>99
+           || Math.floor(-futureCar.y+0.7)<0 || Math.floor(-futureCar.y+0.7)>99)) {
+           if (wallMapa[Math.floor(99.4 + futureCar.x)][Math.floor(-futureCar.y + 0.2)] == 0) {
+               angleRotateCar -= 0.035;
+               xCarPos += 0.05 * Math.cos(angleRotateCar) * bonusCarSpeed;
+               zCarPos += -0.05 * Math.sin(angleRotateCar) * bonusCarSpeed;
+               playerPos.x = -xCarPos + 7;
+               playerPos.z = -zCarPos;
+           }
        }
    }
     if(event.key == "ArrowUp") {
-        futureCar.y += 0.05*Math.cos(angleRotateCar);
-        futureCar.x += -0.05*Math.sin(angleRotateCar);
-        if(CanMove(futureCar)  && wallMapa[Math.floor(99.4+futureCar.x)][Math.floor(-futureCar.y+0.5)]==0) {
-            xCarPos += 0.05 * Math.cos(angleRotateCar);
-            zCarPos += -0.05 * Math.sin(angleRotateCar);
-            playerPos.x = -xCarPos+7;
-            playerPos.z = -zCarPos;
+        futureCar.y += 0.05*Math.cos(angleRotateCar)*bonusCarSpeed;
+        futureCar.x += -0.05*Math.sin(angleRotateCar)*bonusCarSpeed;
+        if(!(Math.floor(99.4+futureCar.x)<0 || Math.floor(99.4+futureCar.x)>99
+            || Math.floor(-futureCar.y+0.7)<0 || Math.floor(-futureCar.y+0.7)>99)) {
+            if (wallMapa[Math.floor(99.4 + futureCar.x)][Math.floor(-futureCar.y + 0.5)] == 0) {
+                xCarPos += 0.05 * Math.cos(angleRotateCar) * bonusCarSpeed;
+                zCarPos += -0.05 * Math.sin(angleRotateCar) * bonusCarSpeed;
+                playerPos.x = -xCarPos + 7;
+                playerPos.z = -zCarPos;
+            }
         }
     }
     if(event.key == "ArrowDown") {
-        futureCar.y -= 0.05*Math.cos(angleRotateCar);
-        futureCar.x -= -0.05*Math.sin(angleRotateCar);
-        if(CanMove(futureCar) && wallMapa[Math.floor(99.2+futureCar.x)][Math.floor(-futureCar.y+0.5)]==0) {
-            xCarPos -= 0.05 * Math.cos(angleRotateCar);
-            zCarPos -= -0.05 * Math.sin(angleRotateCar);
-            playerPos.x = -xCarPos+7;
-            playerPos.z = -zCarPos;
+        futureCar.y -= 0.05*Math.cos(angleRotateCar)*bonusCarSpeed;
+        futureCar.x -= -0.05*Math.sin(angleRotateCar)*bonusCarSpeed;
+        if(!(Math.floor(99.4+futureCar.x)<0 || Math.floor(99.4+futureCar.x)>99
+            || Math.floor(-futureCar.y+0.7)<0 || Math.floor(-futureCar.y+0.7)>99)) {
+            if (wallMapa[Math.floor(99.2 + futureCar.x)][Math.floor(-futureCar.y + 0.5)] == 0) {
+                xCarPos -= 0.05 * Math.cos(angleRotateCar) * bonusCarSpeed;
+                zCarPos -= -0.05 * Math.sin(angleRotateCar) * bonusCarSpeed;
+                playerPos.x = -xCarPos + 7;
+                playerPos.z = -zCarPos;
+            }
         }
     }
     if(event.key == "L") {
@@ -502,18 +599,34 @@ function alertKey(event) {
         xCarPos = _startingCarPosition.x;
         zCarPos = _startingCarPosition.y;
     }
-    if(event.key=='ь')
+    if(CanMove(futureCar))
     {
-        let img = new Image();
-        img.src = "https://topcor.ru/uploads/posts/2018-09/1535951858_maxresdefault.jpg";
-        document.querySelector("#gl_canvas").width=0;
-        document.querySelector("#gl_canvas").height=0;
-        document.querySelector("#map_canvas").width=1200;
-        document.querySelector("#map_canvas").height=800;
-        document.querySelector("#map_canvas").getContext("2d").drawImage(img,0,0);
+        let portal = 0;
+        for(let i = 0; i<shardActive.length;i++)
+        {
+            if(!shardActive[i])
+            {
+                portal++;
+            }
+        }
+        if(portal==shardActive.length && endGameBool)
+        {
+            let mainMusic = document.getElementById("mainSound");
+            mainMusic.pause();
+            finalGameImg.src = "lenin.png"//"https://topcor.ru/uploads/posts/2018-09/1535951858_maxresdefault.jpg";
+            document.querySelector("#gl_canvas").width=0;
+            document.querySelector("#gl_canvas").height=0;
+            document.querySelector("#map_canvas").width=0;
+            document.querySelector("#map_canvas").height=0;
+            document.querySelector("#Lenin").height=800;
+            document.querySelector("#Lenin").width=1200;
+            document.querySelector("#map_canvas").getContext("2d").drawImage(finalGameImg,0,0);
+            document.getElementById("sound3").play();
+            endGameBool = false;
+
+        }
     }
 
-    
 
     /*if(wallMapa[Math.floor(99+xCarPos)][Math.floor(-zCarPos+0.5)]==1)
     {

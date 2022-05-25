@@ -31,8 +31,23 @@ export default class Ant{
         this.speedGiftPos = [];
         this.dropCount = 0;
         this.portalShard = 0;
-        this.protalShardPos = [];
+        this.portalShardPos = [];
     }
+}
+
+Ant.prototype.getShardPoint = function ()
+{
+    return this.portalShardPos;
+}
+
+Ant.prototype.getSpeedGiftPoint = function ()
+{
+    return this.speedGiftPos;
+}
+
+Ant.prototype.getAllStarPoint = function ()
+{
+    return this.allAntStartPos;
 }
 
 Ant.prototype.getStartPosition = function ()
@@ -124,6 +139,7 @@ Ant.prototype.move = function (){
         }
         if(Math.random()>speedChance && this.dropCount<this.antCounter && this.lootMap[position.x][position.y]==0)
         {
+            this.speedGiftPos[this.moveSpeedGift]= {x:position.x,y:position.y};
             this.moveSpeedGift++;
             this.dropCount++;
             this.lootMap[position.x][position.y]=2;
@@ -154,6 +170,7 @@ Ant.prototype.move = function (){
             speedChance-=0.1;
         }
         if(Math.random()<shardChance && this.dropCount<this.antCounter && this.lootMap[position.x][position.y]==0){
+            this.portalShardPos[this.portalShard]= {x:position.x,y:position.y};
             this.portalShard++;
             this.dropCount++;
             this.lootMap[position.x][position.y]=3;
